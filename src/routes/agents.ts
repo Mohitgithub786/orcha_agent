@@ -1,14 +1,14 @@
 import type { FastifyInstance } from 'fastify'
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai'
+import { ChatGroq } from '@langchain/groq'
 import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 import { agentQueries } from '../db/queries'
 import { scheduleAgent, pauseAgent } from '../queue'
 import { getMissingCredentials } from '../vault'
 import { authHook } from '../utils/auth'
 
-const model = new ChatGoogleGenerativeAI({
-    model: 'gemini-3-flash-preview',
-    apiKey: process.env.GEMINI_API_KEY
+const model = new ChatGroq({
+    model: 'llama-3.3-70b-versatile',
+    apiKey: process.env.GROQ_API_KEY
 })
 
 // Meta-prompt: generates a valid AgentConfig JSON from a user description

@@ -81,3 +81,26 @@ export async function getMissingCredentials(
     console.log(`[Vault] Status for user ${userId}: FOUND=[${required.filter(r => vault[r.key]).map(r => r.key)}], MISSING=[${missing.map(r => r.key)}]`)
     return missing
 }
+
+export async function listCredentials(userId: string) {
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+    if (!user) return []
+    const vault = user.vault as Record<string, string>
+    return Object.keys(vault).map(key => ({
+        key,
+        label: key,
+        updatedAt: user.updatedAt,
+    }))
+}
+
+export async function deleteCredential(userId: string, key: string) {
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+    if (!user) return
+
+    const vault = { ...(user.vault as Record<string, string>) }
+    delete vault[key]
+
+    await db.update(users)
+        .set({ vault, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+}

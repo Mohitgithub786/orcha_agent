@@ -50,6 +50,7 @@ export const tools = pgTable('tools', {
     description: text('description').notNull(),
     inputSchema: jsonb('input_schema').notNull(),
     isPublic: boolean('is_public').default(false).notNull(),
+    category: varchar('category', { length: 50 }).default('utility').notNull(),
     // HTTP tool fields
     url: text('url'),
     method: varchar('method', { length: 10 }),

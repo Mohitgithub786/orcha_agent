@@ -13,6 +13,7 @@ export async function seedTools() {
             description: 'Search the internet for real-time information using a query.',
             inputSchema: webSearchSchema,
             isPublic: true,
+            tags: ['web'],
         },
         {
             id: 'telegram_notify',
@@ -21,6 +22,7 @@ export async function seedTools() {
             description: 'Send a message to a Telegram chat using the user\'s bot token.',
             inputSchema: telegramSchema,
             isPublic: true,
+            category: 'Messaging',
         },
         {
             id: 'send_email',
@@ -29,6 +31,7 @@ export async function seedTools() {
             description: 'Send an email via SMTP to a specified recipient.',
             inputSchema: sendEmailSchema,
             isPublic: true,
+            category: 'Messaging',
         },
         {
             id: 'store_credential',
@@ -37,6 +40,7 @@ export async function seedTools() {
             description: 'Securely store a key-value secret (like an API token) in the vault for future use.',
             inputSchema: storeCredentialSchema,
             isPublic: true,
+            category: 'Utility',
         },
     ]
 

@@ -20,7 +20,7 @@ export const checkpointer = new MemorySaver()
 // Build the correct LLM
 function buildLLM(model: string) {
     return new ChatGoogleGenerativeAI({
-        model: model,
+        model: model || 'gemini-3-flash-preview',
         apiKey: process.env.GEMINI_API_KEY,
         temperature: 0.5,
     })
@@ -110,7 +110,6 @@ export async function buildAgent(agentId: string, userId: string) {
 
     return graph
 }
-
 /**
  * Sanitize message history for Gemini's strict turn-ordering rules:
  * 1. Drop orphaned tool results (tool result without preceding tool call)

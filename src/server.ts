@@ -15,9 +15,10 @@ import { logger, loggerConfig } from './utils/logger'
 const fastify = Fastify({ logger: loggerConfig })
 
 
+
 fastify.register(cors, {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:5173'],
 })
 
 fastify.register(agentRoutes, { prefix: '/api' })
