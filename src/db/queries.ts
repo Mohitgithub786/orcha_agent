@@ -45,6 +45,11 @@ export const agentQueries = {
             .where(eq(agents.id, id)).returning(),
     delete: (id: string) =>
         db.delete(agents).where(eq(agents.id, id)),
+    findSubAgents: (userId: string, ids: string[]) =>
+        ids.length ? db.select().from(agents).where(and(
+            inArray(agents.id, ids),
+            eq(agents.userId, userId)
+        )) : Promise.resolve([]),
 }
 
 export const toolQueries = {
@@ -93,7 +98,6 @@ export const credentialQueries = {
         return required.filter(r => !foundKeys.has(r.key))
     },
 }
-
 export const runLogQueries = {
     create: (data: {
         agentId: string; userId: string
@@ -119,7 +123,7 @@ export const runLogQueries = {
             .where(eq(runLogs.agentId, agentId))
             .orderBy(desc(runLogs.createdAt))
             .limit(limit),
-}
+} 
 
 export const memoryQueries = {
     store: (agentId: string, userId: string, content: string, embedding: number[], source = 'conversation') =>

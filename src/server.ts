@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import './instrumentation'
 import Fastify, { type FastifyError } from 'fastify'
 import { seedTools } from './registry/seed'
 import { agentRoutes } from './routes/agents'

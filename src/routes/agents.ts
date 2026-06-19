@@ -1,20 +1,27 @@
 import type { FastifyInstance } from 'fastify'
-import { ChatGroq } from '@langchain/groq'
-import { SystemMessage, HumanMessage } from '@langchain/core/messages'
+import { createGroq } from '@ai-sdk/groq'
+import { generateText } from 'ai'
 import { agentQueries } from '../db/queries'
 import { scheduleAgent, pauseAgent } from '../queue'
 import { getMissingCredentials } from '../vault'
 import { authHook } from '../utils/auth'
 
-const model = new ChatGroq({
-    model: 'llama-3.3-70b-versatile',
-    apiKey: process.env.GROQ_API_KEY
-})
+let model: any = null
 
 // Meta-prompt: generates a valid AgentConfig JSON from a user description
-async function generateAgentConfig(prompt: string) {
-    const response = await model.invoke([
-        new SystemMessage(`You are an AI agent configuration generator.
+async function generateAgentConfig(prompt: string, userId?: string, sessionId?: string) {
+    if (!model) {
+        const groqInstance = createGroq({
+            apiKey: process.env.GROQ_API_KEY
+        })
+        model = groqInstance('llama-3.3-70b-versatile')
+    }
+    const response = await generateText({
+        model,
+        messages: [
+            {
+                role: 'system',
+                content: `You are an AI agent configuration generator.
 Given a description, return ONLY valid JSON — no markdown, no explanation, no code fences.
 
 The JSON must match this exact shape:
@@ -36,12 +43,85 @@ For scheduled agents set type="scheduled" and a sensible interval.
 For credentials, use these EXACT keys:
 - telegram_notify: ["TELEGRAM_TOKEN", "TELEGRAM_CHAT_ID"]
 - send_email: ["SMTP_USER", "SMTP_PASS", "SMTP_HOST"]
-Only include credentials for chosen tools.`),
-        new HumanMessage(`User description: "${prompt}"`)
-    ])
+Only include credentials for chosen tools.`
+            },
+            {
+                role: 'user',
+                content: `User description: "${prompt}"`
+            }
+        ],
+        experimental_telemetry: {
+            isEnabled: true,
+            metadata: {
+                userId: userId ?? '',
+                sessionId: sessionId ?? ''
+            }
+        }
+    })
 
-    const text = response.content as string
-    return JSON.parse(text)
+    return JSON.parse(response.text)
+}
+
+// AI prompt improvement helper
+async function improveSystemPrompt(prompt: string, userId?: string, sessionId?: string): Promise<string> {
+    if (!model) {
+        const groqInstance = createGroq({
+            apiKey: process.env.GROQ_API_KEY
+        })
+        model = groqInstance('llama-3.3-70b-versatile')
+    }
+    const response = await generateText({
+        model,
+        messages: [
+            {
+                role: 'system',
+                content: `You are an expert prompt engineer. Your job is to optimize, refine, and improve the system prompt for an AI agent to make it more precise, structured, clear, and effective. Correct any logical errors, improve readability, and keep it clean. Do not include markdown code blocks or explanations in your response, return ONLY the raw improved system prompt content.`
+            },
+            {
+                role: 'user',
+                content: `Here is the current system prompt to improve:\n\n"${prompt}"`
+            }
+        ],
+        experimental_telemetry: {
+            isEnabled: true,
+            metadata: {
+                userId: userId ?? '',
+                sessionId: sessionId ?? ''
+            }
+        }
+    })
+    return response.text
+}
+
+// AI prompt generation helper
+async function generateSystemPrompt(description: string, userId?: string, sessionId?: string): Promise<string> {
+    if (!model) {
+        const groqInstance = createGroq({
+            apiKey: process.env.GROQ_API_KEY
+        })
+        model = groqInstance('llama-3.3-70b-versatile')
+    }
+    const response = await generateText({
+        model,
+        messages: [
+            {
+                role: 'system',
+                content: `You are an expert prompt engineer. Your job is to generate a comprehensive, professional system prompt for an AI agent based on a user's description. The system prompt should outline the agent's role, objectives, behavior guidelines, and tone. Do not include markdown code blocks or explanations in your response, return ONLY the raw generated system prompt content.`
+            },
+            {
+                role: 'user',
+                content: `Here is the description of what the agent should do:\n\n"${description}"`
+            }
+        ],
+        experimental_telemetry: {
+            isEnabled: true,
+            metadata: {
+                userId: userId ?? '',
+                sessionId: sessionId ?? ''
+            }
+        }
+    })
+    return response.text
 }
 
 export async function agentRoutes(fastify: FastifyInstance) {
@@ -55,13 +135,13 @@ export async function agentRoutes(fastify: FastifyInstance) {
         fastify.log.info({ prompt }, 'Generating agent config from prompt')
         let config
         try {
-            config = await generateAgentConfig(prompt)
+            const sessionToken = req.headers['x-session-token'] || req.headers['authorization'] || 'agents-session'
+            config = await generateAgentConfig(prompt, req.userId, sessionToken)
             fastify.log.info({ config }, 'Generated agent config')
         } catch (error) {
             fastify.log.error(error, 'Failed to generate agent config')
             return reply.code(500).send({ error: 'Failed to generate agent configuration' })
         }
-
         try {
             const [agent] = await agentQueries.create({ ...config, userId: req.userId })
             fastify.log.info({ agentId: agent.id }, 'Created agent')
@@ -72,6 +152,36 @@ export async function agentRoutes(fastify: FastifyInstance) {
         } catch (error) {
             fastify.log.error({ error, config }, 'Failed to create agent in database')
             throw error // Rethrow to let global error handler handle it
+        }
+    })
+
+    // POST /agents/improve-prompt — improve prompt using AI
+    fastify.post('/agents/improve-prompt', async (req: any, reply) => {
+        const { prompt } = req.body as { prompt: string }
+        if (!prompt) return reply.code(400).send({ error: 'prompt is required' })
+
+        try {
+            const sessionToken = req.headers['x-session-token'] || req.headers['authorization'] || 'improve-session'
+            const improved = await improveSystemPrompt(prompt, req.userId, sessionToken)
+            return reply.send({ prompt: improved })
+        } catch (error) {
+            fastify.log.error(error, 'Failed to improve system prompt')
+            return reply.code(500).send({ error: 'Failed to improve system prompt' })
+        }
+    })
+
+    // POST /agents/generate-prompt — generate system prompt using AI
+    fastify.post('/agents/generate-prompt', async (req: any, reply) => {
+        const { description } = req.body as { description: string }
+        if (!description) return reply.code(400).send({ error: 'description is required' })
+
+        try {
+            const sessionToken = req.headers['x-session-token'] || req.headers['authorization'] || 'generate-session'
+            const generated = await generateSystemPrompt(description, req.userId, sessionToken)
+            return reply.send({ prompt: generated })
+        } catch (error) {
+            fastify.log.error(error, 'Failed to generate system prompt')
+            return reply.code(500).send({ error: 'Failed to generate system prompt' })
         }
     })
 
