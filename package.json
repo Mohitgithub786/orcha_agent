@@ -36,7 +36,6 @@
     "drizzle-orm": "latest",
     "fastify": "latest",
     "ioredis": "latest",
-    "isolated-vm": "latest",
     "nodemailer": "latest",
     "openai": "latest",
     "postgres": "latest",
