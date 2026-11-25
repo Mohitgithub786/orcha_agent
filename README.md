@@ -1,10 +1,13 @@
 # Orcha Agent 🤖⚡️
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-orcha--agent.railway.app-success?style=for-the-badge&logo=railway)](https://orcha-agent-production.up.railway.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![Fastify](https://img.shields.io/badge/Fastify-5.x-black.svg)](https://fastify.dev/)
 [![LangGraph](https://img.shields.io/badge/LangGraph-State_Orchestrator-6366f1.svg)](https://langchain-ai.github.io/langgraphjs/)
 [![Security: AES-256](https://img.shields.io/badge/Security-AES--256--CBC-10b981.svg)](https://nodejs.org/api/crypto.html)
+
+> 🚀 **Live Demo:** [https://orcha-agent-production.up.railway.app/](https://orcha-agent-production.up.railway.app/)
 
 **Orcha Agent** is an autonomous AI agent orchestration platform built with **TypeScript**, **Fastify**, and **LangGraph**. It enables dynamic, self-healing LLM agents that interface with internal tools, notify users across Telegram/SMTP, execute sandboxed code, and securely manage credentials on the fly.
 
