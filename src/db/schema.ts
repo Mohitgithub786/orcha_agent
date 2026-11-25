@@ -7,9 +7,9 @@ import {
 import { relations } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
 
-// pgvector custom type — Drizzle supports this natively
+// pgvector custom type fallback to text for standard PostgreSQL
 const vector = customType<{ data: number[]; driverData: string }>({
-    dataType() { return 'vector(1536)' },
+    dataType() { return 'text' },
     toDriver(value: number[]): string { return `[${value.join(',')}]` },
     fromDriver(value: string): number[] {
         return value.slice(1, -1).split(',').map(Number)
