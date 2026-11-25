@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: orcha-agent
+    env: node
+    plan: free
+    buildCommand: npm install --legacy-peer-deps
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: ENCRYPTION_KEY
+        generateValue: true

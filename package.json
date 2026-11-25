@@ -5,6 +5,7 @@
   "description": "AI agent creation and orchestration platform",
   "main": "dist/server.js",
   "scripts": {
+    "start": "tsx src/server.ts",
     "dev": "tsx src/server.ts",
     "build": "tsc",
     "db:generate": "drizzle-kit generate",
