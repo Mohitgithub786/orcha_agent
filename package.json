@@ -19,6 +19,7 @@
     "@ai-sdk/openai": "^3.0.72",
     "@anthropic-ai/sdk": "latest",
     "@fastify/cors": "^11.2.0",
+    "@fastify/static": "^10.1.12",
     "@langchain/anthropic": "latest",
     "@langchain/core": "latest",
     "@langchain/google-genai": "^2.1.26",

@@ -2,29 +2,41 @@ import { Queue, Worker } from 'bullmq'
 import { redis } from './redis'
 import { runAgentWithLog } from './runner'
 import { agentQueries } from './db/queries'
-
-export const agentQueue = new Queue('agent-jobs', { connection: redis as any })
-
 import { logger } from './utils/logger'
 
-// Worker — picks up jobs and runs the agent
-new Worker('agent-jobs', async (job) => {
-    const { agentId, userId, message } = job.data
-    const logCtx = { jobId: job.id, agentId, userId, name: job.name }
+let agentQueue: Queue | null = null
 
-    logger.info(logCtx, `Starting job: ${job.name}`)
+try {
+    agentQueue = new Queue('agent-jobs', { connection: redis as any })
+    agentQueue.on('error', (err) => {
+        logger.warn({ err: err.message }, 'BullMQ Queue connection warning (Redis offline)')
+    })
 
-    try {
-        if (job.name === 'run-agent') {
-            const output = await runAgentWithLog(agentId, userId, message ?? undefined, 'scheduled')
-            logger.info({ ...logCtx, outputLength: output.length }, `Successfully completed job: ${job.name}`)
+    const worker = new Worker('agent-jobs', async (job) => {
+        const { agentId, userId, message } = job.data
+        const logCtx = { jobId: job.id, agentId, userId, name: job.name }
+
+        logger.info(logCtx, `Starting job: ${job.name}`)
+
+        try {
+            if (job.name === 'run-agent') {
+                const output = await runAgentWithLog(agentId, userId, message ?? undefined, 'scheduled')
+                logger.info({ ...logCtx, outputLength: output.length }, `Successfully completed job: ${job.name}`)
+            }
+        } catch (error) {
+            logger.error({ ...logCtx, error }, `Failed job: ${job.name}`)
+            throw error
         }
-    } catch (error) {
-        logger.error({ ...logCtx, error }, `Failed job: ${job.name}`)
-        throw error
-    }
-}, { connection: redis as any })
+    }, { connection: redis as any })
 
+    worker.on('error', (err) => {
+        logger.warn({ err: err.message }, 'BullMQ Worker connection warning (Redis offline)')
+    })
+} catch (err: any) {
+    logger.warn({ err: err.message }, 'Failed to initialize BullMQ (Redis not available)')
+}
+
+export { agentQueue }
 
 // Convert human-readable interval to milliseconds
 export function parseInterval(str: string): number {
@@ -46,6 +58,10 @@ export function parseInterval(str: string): number {
 }
 
 export async function scheduleAgent(agentId: string, userId: string, interval: string) {
+    if (!agentQueue) {
+        logger.warn('Redis queue not available for scheduling')
+        return
+    }
     const ms = parseInterval(interval)
     const jobId = `agent-${agentId}`
 
@@ -62,6 +78,7 @@ export async function scheduleAgent(agentId: string, userId: string, interval: s
 }
 
 export async function pauseAgent(agentId: string) {
+    if (!agentQueue) return
     const [agent] = await agentQueries.findById(agentId)
     if (agent?.bullJobId) {
         if (typeof (agentQueue as any).removeRepeatable === 'function') {

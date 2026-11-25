@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orcha Agent 🤖⚡️ | Autonomous LLM Orchestration Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="app-container">
+        <!-- Top Navigation Bar -->
+        <header class="top-nav">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-brain"></i>
+                    <span class="pulse-ring"></span>
+                </div>
+                <div class="brand-text">
+                    <h1>ORCHA <span>AGENT</span></h1>
+                    <span class="tagline">Autonomous LLM Orchestrator & Vault</span>
+                </div>
+            </div>
+
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="playground">
+                    <i class="fa-solid fa-terminal"></i> Agent Playground
+                </button>
+                <button class="nav-tab" data-tab="studio">
+                    <i class="fa-solid fa-microchip"></i> Agent Studio
+                </button>
+                <button class="nav-tab" data-tab="tools">
+                    <i class="fa-solid fa-toolbox"></i> Tool Registry
+                </button>
+                <button class="nav-tab" data-tab="vault">
+                    <i class="fa-solid fa-shield-halved"></i> Credential Vault
+                </button>
+                <button class="nav-tab" data-tab="telemetry">
+                    <i class="fa-solid fa-chart-line"></i> Telemetry
+                </button>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="status-pill connected" id="engine-status">
+                    <span class="dot"></span>
+                    <span class="status-label">Engine: Fastify 3001</span>
+                </div>
+                <div class="user-badge" title="Active Session">
+                    <i class="fa-solid fa-user-astronaut"></i>
+                    <span id="active-user-id">mohit-dev</span>
+                </div>
+                <a href="https://github.com/Mohitgithub786/orcha_agent" target="_blank" class="github-link" title="View Source on GitHub">
+                    <i class="fa-brands fa-github"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- 1. PLAYGROUND VIEW -->
+            <section id="view-playground" class="view-section active">
+                <div class="playground-layout">
+                    <!-- Left: Agent Selector & Config Summary -->
+                    <aside class="panel agent-sidebar">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-robot"></i> Active Agent</h3>
+                            <span class="badge-accent" id="active-model-badge">Groq LLaMA-3.3</span>
+                        </div>
+                        <div class="agent-select-wrap">
+                            <label for="agent-selector">Select Agent</label>
+                            <select id="agent-selector" class="custom-select">
+                                <option value="agent-crypto-analyst">⚡ Crypto & Market Sentinel</option>
+                                <option value="agent-researcher">🔍 Deep Web Research Agent</option>
+                                <option value="agent-notifier">📨 Notification & Alert Bot</option>
+                                <option value="agent-code-exec">💻 Code Sandbox & Data Analyst</option>
+                            </select>
+                        </div>
+
+                        <div class="agent-spec-card">
+                            <div class="spec-row">
+                                <span class="spec-label">Framework</span>
+                                <span class="spec-val">LangGraph v0.2</span>
+                            </div>
+                            <div class="spec-row">
+                                <span class="spec-label">Checkpointing</span>
+                                <span class="spec-val text-success">PostgreSQL Memory</span>
+                            </div>
+                            <div class="spec-row">
+                                <span class="spec-label">Vault Security</span>
+                                <span class="spec-val text-warning">AES-256-CBC</span>
+                            </div>
+                            <div class="spec-row">
+                                <span class="spec-label">Enabled Tools</span>
+                                <div class="tools-mini-tags" id="active-tools-tags">
+                                    <span class="tag">web_search</span>
+                                    <span class="tag">telegram_notify</span>
+                                    <span class="tag">store_credential</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="quick-prompts">
+                            <h4>Quick Prompts</h4>
+                            <button class="quick-btn" data-prompt="Check the latest price of Bitcoin and summarize top news.">
+                                <i class="fa-solid fa-bolt"></i> Bitcoin Price & News
+                            </button>
+                            <button class="quick-btn" data-prompt="Send a Telegram alert with summary of Nvidia quarterly earnings.">
+                                <i class="fa-brands fa-telegram"></i> Telegram Notification
+                            </button>
+                            <button class="quick-btn" data-prompt="Run sandbox JS code to compute Fibonacci sequence up to 20 numbers.">
+                                <i class="fa-solid fa-code"></i> Run Sandbox Code
+                            </button>
+                            <button class="quick-btn" data-prompt="Draft and send an executive email summarizing daily AI agent metrics.">
+                                <i class="fa-solid fa-envelope"></i> Send SMTP Email
+                            </button>
+                        </div>
+                    </aside>
+
+                    <!-- Center: Chat & Multi-Step Execution Stream -->
+                    <div class="panel chat-console">
+                        <div class="panel-header">
+                            <div class="header-title">
+                                <i class="fa-solid fa-network-wired"></i>
+                                <span>Agent Reasoning Stream</span>
+                            </div>
+                            <div class="header-controls">
+                                <button class="btn-ghost" id="btn-clear-chat" title="Clear Console">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                                <button class="btn-ghost" id="btn-export-trace" title="Export Trace JSON">
+                                    <i class="fa-solid fa-file-export"></i> Trace
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chat Messages Stream -->
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="msg system-msg">
+                                <div class="msg-icon"><i class="fa-solid fa-circle-info"></i></div>
+                                <div class="msg-body">
+                                    <strong>Orcha Agent Engine Initialized.</strong> LangGraph checkpoint memory active. Self-healing vault initialized with 256-bit encryption. Ask a question or trigger a tool loop below.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stepper / Pipeline Visualizer -->
+                        <div class="pipeline-tracker" id="pipeline-tracker">
+                            <div class="step-node" id="step-input">
+                                <div class="node-circle"><i class="fa-solid fa-user"></i></div>
+                                <span>Input</span>
+                            </div>
+                            <div class="step-line" id="line-1"></div>
+                            <div class="step-node" id="step-graph">
+                                <div class="node-circle"><i class="fa-solid fa-diagram-project"></i></div>
+                                <span>LangGraph</span>
+                            </div>
+                            <div class="step-line" id="line-2"></div>
+                            <div class="step-node" id="step-tool">
+                                <div class="node-circle"><i class="fa-solid fa-wrench"></i></div>
+                                <span>Tool Call</span>
+                            </div>
+                            <div class="step-line" id="line-3"></div>
+                            <div class="step-node" id="step-vault">
+                                <div class="node-circle"><i class="fa-solid fa-key"></i></div>
+                                <span>Vault Sync</span>
+                            </div>
+                            <div class="step-line" id="line-4"></div>
+                            <div class="step-node" id="step-output">
+                                <div class="node-circle"><i class="fa-solid fa-check"></i></div>
+                                <span>Output</span>
+                            </div>
+                        </div>
+
+                        <!-- Input Bar -->
+                        <div class="chat-input-bar">
+                            <div class="input-container">
+                                <textarea id="chat-input" placeholder="Instruct Orcha Agent (e.g., 'Search for latest AI news and notify on Telegram')..." rows="1"></textarea>
+                                <button id="btn-mic" class="mic-btn" title="Voice Input"><i class="fa-solid fa-microphone"></i></button>
+                                <button id="btn-send" class="send-btn">
+                                    <span>Execute</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Execution Inspector & State Graph -->
+                    <aside class="panel execution-inspector">
+                        <div class="panel-header">
+                            <h3><i class="fa-solid fa-microscope"></i> Live Inspector</h3>
+                            <span class="badge-subtle" id="exec-latency">0 ms</span>
+                        </div>
+
+                        <div class="inspector-section">
+                            <h4>Tool Invocations</h4>
+                            <div class="tool-call-feed" id="tool-call-feed">
+                                <div class="empty-state">No tool calls in current turn.</div>
+                            </div>
+                        </div>
+
+                        <div class="inspector-section">
+                            <h4>Agent Memory & Checkpoint</h4>
+                            <div class="memory-card">
+                                <div class="memory-row">
+                                    <span>Thread ID</span>
+                                    <code id="thread-id-display">thread-init-01</code>
+                                </div>
+                                <div class="memory-row">
+                                    <span>Active Recursion</span>
+                                    <span id="recursion-count">0 / 25</span>
+                                </div>
+                                <div class="memory-row">
+                                    <span>Vault Status</span>
+                                    <span class="text-success"><i class="fa-solid fa-lock"></i> Encrypted</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="inspector-section">
+                            <h4>Recent Execution Log</h4>
+                            <div class="terminal-log" id="terminal-log">
+                                <div class="log-line">[SYS] Fastify server listening on port 3001</div>
+                                <div class="log-line">[LLM] Model provider: Groq (Llama-3.3-70b-versatile)</div>
+                                <div class="log-line">[READY] Awaiting agent invocation...</div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </section>
+
+            <!-- 2. AGENT STUDIO VIEW -->
+            <section id="view-studio" class="view-section">
+                <div class="studio-header">
+                    <div>
+                        <h2>Agent Configuration Studio</h2>
+                        <p>Build, tune, and persist multi-agent workflows with customizable tool registries and temperature controls.</p>
+                    </div>
+                    <button class="btn-primary" id="btn-save-agent">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Agent
+                    </button>
+                </div>
+
+                <div class="studio-grid">
+                    <div class="panel form-panel">
+                        <h3>Agent Parameters</h3>
+                        <div class="form-group">
+                            <label>Agent Name</label>
+                            <input type="text" id="studio-name" value="Autonomous Market Sentinel" class="custom-input">
+                        </div>
+                        <div class="form-group">
+                            <label>LLM Provider & Model</label>
+                            <select id="studio-model" class="custom-select">
+                                <option value="llama-3.3-70b-versatile">Groq — LLaMA-3.3-70B Versatile (Fastest)</option>
+                                <option value="gpt-4o">OpenAI — GPT-4o Multi-Modal</option>
+                                <option value="claude-3-5-sonnet">Anthropic — Claude 3.5 Sonnet</option>
+                                <option value="gemini-1.5-pro">Google — Gemini 1.5 Pro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>System Prompt (Instructions)</label>
+                            <textarea id="studio-prompt" class="custom-input custom-textarea" rows="6">You are Orcha Sentinel, an autonomous proactive intelligence agent. When tasked with market queries, retrieve real-time facts via web_search, analyze signals, and dispatch updates via telegram_notify or send_email. If missing credentials, use store_credential to capture them securely.</textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group half">
+                                <label>Temperature (<span id="temp-val">0.2</span>)</label>
+                                <input type="range" id="studio-temp" min="0" max="1" step="0.05" value="0.2" class="custom-slider">
+                            </div>
+                            <div class="form-group half">
+                                <label>Max Recursion Limit</label>
+                                <input type="number" id="studio-recursion" value="25" min="5" max="50" class="custom-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel tools-assignment-panel">
+                        <h3>Tool Attachments</h3>
+                        <p class="section-desc">Select platform tools this agent can invoke autonomously during its LangGraph reasoning loops.</p>
+                        
+                        <div class="tool-checkbox-list">
+                            <label class="tool-check-card">
+                                <input type="checkbox" checked value="web_search">
+                                <div class="tool-check-info">
+                                    <div class="t-title"><i class="fa-solid fa-globe"></i> web_search</div>
+                                    <div class="t-desc">Real-time internet queries via Serper API</div>
+                                </div>
+                            </label>
+                            <label class="tool-check-card">
+                                <input type="checkbox" checked value="telegram_notify">
+                                <div class="tool-check-info">
+                                    <div class="t-title"><i class="fa-brands fa-telegram"></i> telegram_notify</div>
+                                    <div class="t-desc">Dispatches immediate alerts to Telegram channels/chats</div>
+                                </div>
+                            </label>
+                            <label class="tool-check-card">
+                                <input type="checkbox" checked value="send_email">
+                                <div class="tool-check-info">
+                                    <div class="t-title"><i class="fa-solid fa-envelope"></i> send_email</div>
+                                    <div class="t-desc">Sends HTML/Text emails via authenticated SMTP relay</div>
+                                </div>
+                            </label>
+                            <label class="tool-check-card">
+                                <input type="checkbox" checked value="store_credential">
+                                <div class="tool-check-info">
+                                    <div class="t-title"><i class="fa-solid fa-key"></i> store_credential</div>
+                                    <div class="t-desc">Self-healing vault tool for conversational credential collection</div>
+                                </div>
+                            </label>
+                            <label class="tool-check-card">
+                                <input type="checkbox" checked value="code_sandbox">
+                                <div class="tool-check-info">
+                                    <div class="t-title"><i class="fa-solid fa-code"></i> code_sandbox</div>
+                                    <div class="t-desc">Isolated JavaScript execution engine with lodash & dayjs</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. TOOL REGISTRY VIEW -->
+            <section id="view-tools" class="view-section">
+                <div class="studio-header">
+                    <div>
+                        <h2>Platform Tool Registry</h2>
+                        <p>Inspect schemas, parameters, and test execute any platform tool directly in real time.</p>
+                    </div>
+                </div>
+
+                <div class="tool-cards-grid">
+                    <div class="panel tool-card">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-cyan"><i class="fa-solid fa-globe"></i></div>
+                            <div>
+                                <h3>web_search</h3>
+                                <span class="badge-subtle">Category: Intelligence</span>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Queries the web for live search results, headlines, organic snippets, and real-time facts.</p>
+                        <div class="schema-box">
+                            <code>{ "query": "string (search terms)" }</code>
+                        </div>
+                        <button class="btn-outline-sm btn-test-tool" data-tool="web_search">Test Execute</button>
+                    </div>
+
+                    <div class="panel tool-card">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-blue"><i class="fa-brands fa-telegram"></i></div>
+                            <div>
+                                <h3>telegram_notify</h3>
+                                <span class="badge-subtle">Category: Communications</span>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Sends formatted push messages to Telegram. Pulls bot token securely from encrypted vault.</p>
+                        <div class="schema-box">
+                            <code>{ "message": "string (markdown allowed)" }</code>
+                        </div>
+                        <button class="btn-outline-sm btn-test-tool" data-tool="telegram_notify">Test Execute</button>
+                    </div>
+
+                    <div class="panel tool-card">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-green"><i class="fa-solid fa-envelope"></i></div>
+                            <div>
+                                <h3>send_email</h3>
+                                <span class="badge-subtle">Category: Dispatch</span>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Dispatches notifications via SMTP. Resolves recipient, subject, and body dynamically.</p>
+                        <div class="schema-box">
+                            <code>{ "to": "email", "subject": "str", "body": "str" }</code>
+                        </div>
+                        <button class="btn-outline-sm btn-test-tool" data-tool="send_email">Test Execute</button>
+                    </div>
+
+                    <div class="panel tool-card">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-amber"><i class="fa-solid fa-key"></i></div>
+                            <div>
+                                <h3>store_credential</h3>
+                                <span class="badge-subtle">Category: Self-Healing Vault</span>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Allows the agent to self-heal missing API credentials on the fly without user intervention.</p>
+                        <div class="schema-box">
+                            <code>{ "key": "string", "value": "secret string" }</code>
+                        </div>
+                        <button class="btn-outline-sm btn-test-tool" data-tool="store_credential">Test Execute</button>
+                    </div>
+
+                    <div class="panel tool-card">
+                        <div class="tool-card-top">
+                            <div class="tool-icon icon-rose"><i class="fa-solid fa-code"></i></div>
+                            <div>
+                                <h3>code_sandbox</h3>
+                                <span class="badge-subtle">Category: Computation</span>
+                            </div>
+                        </div>
+                        <p class="tool-desc">Executes arbitrary JavaScript in a secure memory-capped VM context with built-in utility libraries.</p>
+                        <div class="schema-box">
+                            <code>{ "code": "run(__input) { return ... }" }</code>
+                        </div>
+                        <button class="btn-outline-sm btn-test-tool" data-tool="code_sandbox">Test Execute</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. CREDENTIAL VAULT VIEW -->
+            <section id="view-vault" class="view-section">
+                <div class="studio-header">
+                    <div>
+                        <h2>Self-Healing Credential Vault 🔐</h2>
+                        <p>Store encrypted API keys, tokens, and secrets with AES-256-CBC database encryption.</p>
+                    </div>
+                    <button class="btn-primary" id="btn-add-secret-modal">
+                        <i class="fa-solid fa-plus"></i> Add Secret
+                    </button>
+                </div>
+
+                <div class="vault-container">
+                    <div class="panel vault-table-panel">
+                        <table class="vault-table">
+                            <thead>
+                                <tr>
+                                    <th>Key Name</th>
+                                    <th>Service</th>
+                                    <th>Encrypted Hash</th>
+                                    <th>Last Updated</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vault-items-tbody">
+                                <tr>
+                                    <td><code>GROQ_API_KEY</code></td>
+                                    <td><span class="badge-pill">Groq LLM</span></td>
+                                    <td><span class="cipher-text">ae7f3b...98c21a (AES-256)</span></td>
+                                    <td>Just now</td>
+                                    <td><button class="btn-delete-secret" data-key="GROQ_API_KEY"><i class="fa-solid fa-trash"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>SERPER_API_KEY</code></td>
+                                    <td><span class="badge-pill">Serper Search</span></td>
+                                    <td><span class="cipher-text">5d290c...fa4419 (AES-256)</span></td>
+                                    <td>Today</td>
+                                    <td><button class="btn-delete-secret" data-key="SERPER_API_KEY"><i class="fa-solid fa-trash"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td><code>TELEGRAM_BOT_TOKEN</code></td>
+                                    <td><span class="badge-pill">Telegram Bot</span></td>
+                                    <td><span class="cipher-text">88fe1a...719b02 (AES-256)</span></td>
+                                    <td>Yesterday</td>
+                                    <td><button class="btn-delete-secret" data-key="TELEGRAM_BOT_TOKEN"><i class="fa-solid fa-trash"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="panel vault-info-panel">
+                        <h3><i class="fa-solid fa-lock"></i> Encryption Architecture</h3>
+                        <p>Credentials in Orcha Agent are never stored in plaintext. They are encrypted using an initialization vector (IV) and a 32-byte secret key:</p>
+                        <div class="crypto-formula">
+                            <code>Ciphertext = AES-256-CBC(Data, ENCRYPTION_KEY, IV)</code>
+                        </div>
+                        <ul class="vault-bullets">
+                            <li><i class="fa-solid fa-check text-success"></i> Dynamic self-healing: Agent requests missing key in chat and updates vault automatically.</li>
+                            <li><i class="fa-solid fa-check text-success"></i> Scoped per User ID with strict row isolation.</li>
+                            <li><i class="fa-solid fa-check text-success"></i> Decryption happens strictly in-memory during tool invocation.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. TELEMETRY VIEW -->
+            <section id="view-telemetry" class="view-section">
+                <div class="studio-header">
+                    <div>
+                        <h2>Orchestration Telemetry & Benchmarks</h2>
+                        <p>Live execution metrics, LangGraph recursion depths, and latency distributions.</p>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card panel">
+                        <div class="metric-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-title">Average Latency</span>
+                            <span class="metric-number">48 ms</span>
+                            <span class="metric-sub text-success">⚡ Ultra-fast inference</span>
+                        </div>
+                    </div>
+                    <div class="metric-card panel">
+                        <div class="metric-icon"><i class="fa-solid fa-arrows-split-up-and-left"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-title">Tool Routing Accuracy</span>
+                            <span class="metric-number">99.4%</span>
+                            <span class="metric-sub text-success">Optimal function calling</span>
+                        </div>
+                    </div>
+                    <div class="metric-card panel">
+                        <div class="metric-icon"><i class="fa-solid fa-shield-virus"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-title">Vault Self-Heals</span>
+                            <span class="metric-number">100%</span>
+                            <span class="metric-sub text-cyan">Zero manual interruption</span>
+                        </div>
+                    </div>
+                    <div class="metric-card panel">
+                        <div class="metric-icon"><i class="fa-solid fa-microchip"></i></div>
+                        <div class="metric-info">
+                            <span class="metric-title">Active Platform Tools</span>
+                            <span class="metric-number">5 Tools</span>
+                            <span class="metric-sub">Modular registry</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="telemetry-log-panel panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-list-check"></i> Execution Run History</h3>
+                        <button class="btn-ghost" id="btn-refresh-telemetry"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                    </div>
+                    <table class="runs-table">
+                        <thead>
+                            <tr>
+                                <th>Run ID</th>
+                                <th>Agent</th>
+                                <th>Trigger</th>
+                                <th>Tools Invoked</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="runs-table-tbody">
+                            <tr>
+                                <td><code>run_c7f81a</code></td>
+                                <td>Crypto & Market Sentinel</td>
+                                <td>Chat Request</td>
+                                <td><code>web_search</code></td>
+                                <td>142ms</td>
+                                <td><span class="badge-status success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>run_b294e0</code></td>
+                                <td>Notification Bot</td>
+                                <td>Scheduled (BullMQ)</td>
+                                <td><code>telegram_notify</code></td>
+                                <td>89ms</td>
+                                <td><span class="badge-status success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td><code>run_a189f3</code></td>
+                                <td>Code Sandbox Analyst</td>
+                                <td>Chat Request</td>
+                                <td><code>code_sandbox</code></td>
+                                <td>38ms</td>
+                                <td><span class="badge-status success">Completed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
