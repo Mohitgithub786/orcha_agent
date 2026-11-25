@@ -51,7 +51,7 @@ export async function scheduleAgent(agentId: string, userId: string, interval: s
 
     logger.info({ agentId, userId, interval, ms, jobId }, 'Scheduling repeating agent job')
 
-    await agentQueue.add(
+    await (agentQueue as any).add(
         'run-agent',
         { agentId, userId },
         { repeat: { every: ms }, jobId }
@@ -64,9 +64,13 @@ export async function scheduleAgent(agentId: string, userId: string, interval: s
 export async function pauseAgent(agentId: string) {
     const [agent] = await agentQueries.findById(agentId)
     if (agent?.bullJobId) {
-        await agentQueue.removeRepeatable('run-agent', {
-            every: 0, jobId: agent.bullJobId
-        })
+        if (typeof (agentQueue as any).removeRepeatable === 'function') {
+            await (agentQueue as any).removeRepeatable('run-agent', {
+                every: 0, jobId: agent.bullJobId
+            })
+        } else if (typeof (agentQueue as any).removeRepeatableByKey === 'function') {
+            await (agentQueue as any).removeRepeatableByKey(agent.bullJobId)
+        }
         await agentQueries.update(agentId, { bullJobId: null as any })
     }
 }
